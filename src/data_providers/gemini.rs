@@ -5,6 +5,7 @@ use crate::{
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
+// Gemini API response structures
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct GeminiPricelevel {
     price: String,
@@ -12,12 +13,14 @@ struct GeminiPricelevel {
     timestamp: String,
 }
 
+// Gemini API response structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct GeminiBookResponse {
     bids: Vec<GeminiPricelevel>,
     asks: Vec<GeminiPricelevel>,
 }
 
+// Gemini Exchange Data Provider
 pub struct GeminiExchange {
     client: reqwest::Client,
 }
@@ -30,16 +33,15 @@ impl GeminiExchange {
     }
 }
 
+// Implement DataProvider trait for GeminiExchange
 #[async_trait]
 impl DataProvider for GeminiExchange {
     fn name(&self) -> &str {
         "Gemini"
     }
 
-    async fn fetch_order_book(
-        &self,
-        product_id: &str,
-    ) -> Result<OrderBook, DataProviderError> {
+    // Fetch order book data from Gemini API
+    async fn fetch_order_book(&self, product_id: &str) -> Result<OrderBook, DataProviderError> {
         let base_url = "https://api.gemini.com";
         let url = format!("{}/v1/book/{}", base_url, product_id);
         let response = self
@@ -60,13 +62,17 @@ impl DataProvider for GeminiExchange {
         let mut order_book = OrderBook::new();
         // Add bids to order book
         for level in &book.bids {
-            if let (Ok(price), Ok(quantity)) = (level.price.parse::<f64>(), level.amount.parse::<f64>()) {
+            if let (Ok(price), Ok(quantity)) =
+                (level.price.parse::<f64>(), level.amount.parse::<f64>())
+            {
                 order_book.add_bid(price, quantity);
             }
         }
         // Add asks to order book
         for level in &book.asks {
-            if let (Ok(price), Ok(quantity)) = (level.price.parse::<f64>(), level.amount.parse::<f64>()) {
+            if let (Ok(price), Ok(quantity)) =
+                (level.price.parse::<f64>(), level.amount.parse::<f64>())
+            {
                 order_book.add_ask(price, quantity);
             }
         }
@@ -86,6 +92,3 @@ mod tests {
         assert!(!order_book.is_empty());
     }
 }
-
-    
-

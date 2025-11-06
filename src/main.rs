@@ -1,15 +1,17 @@
 mod aggregator;
 mod data_providers;
-mod order_book;
 mod error;
+mod order_book;
 use std::sync::Arc;
 
 use clap::Parser;
 
-use crate::data_providers::gemini::GeminiExchange;
-use crate::{aggregator::OrderBookAggregator, data_providers::coinbase::CoinbaseExchange, error::AggregatorError};
 use crate::data_providers::DataProvider;
-
+use crate::data_providers::gemini::GeminiExchange;
+use crate::{
+    aggregator::OrderBookAggregator, data_providers::coinbase::CoinbaseExchange,
+    error::AggregatorError,
+};
 
 #[derive(Parser, Debug)]
 #[command(name = "order-book-aggregator")]
@@ -20,7 +22,7 @@ struct Args {
 }
 
 #[tokio::main]
-async fn main()-> Result<(), AggregatorError>{
+async fn main() -> Result<(), AggregatorError> {
     let args = Args::parse();
     let quantity = args.qty;
 
@@ -28,7 +30,7 @@ async fn main()-> Result<(), AggregatorError>{
         Arc::new(CoinbaseExchange::new()) as Arc<dyn DataProvider>,
         Arc::new(GeminiExchange::new()) as Arc<dyn DataProvider>,
     ];
-    
+
     let aggregator = OrderBookAggregator::new(data_providers, "BTC-USD");
     let aggregated_book = aggregator.fetch_and_aggregate_data().await?;
 
@@ -38,7 +40,5 @@ async fn main()-> Result<(), AggregatorError>{
     let best_sell_price = aggregated_book.calculate_best_sell_offer(quantity)?;
     println!("To sell {} BTC : ${}", quantity, best_sell_price);
 
-
-    
     Ok(())
 }

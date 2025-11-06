@@ -6,7 +6,6 @@ pub struct OrderBookAggregator {
     data_providers: Vec<Arc<dyn crate::data_providers::DataProvider>>,
     // OrderBook aggregation for this product ID
     product_id: String,
-
 }
 
 impl OrderBookAggregator {
@@ -15,18 +14,17 @@ impl OrderBookAggregator {
         OrderBookAggregator {
             data_providers,
             product_id: product_id.to_string(),
-    
         }
     }
 
     // Fetch and aggregate order book data from all data providers
-    pub async fn fetch_and_aggregate_data(&self)-> Result<OrderBook, AggregatorError>{
+    pub async fn fetch_and_aggregate_data(&self) -> Result<OrderBook, AggregatorError> {
         let mut handles = Vec::new();
-       for provider in &self.data_providers {
+        for provider in &self.data_providers {
             println!("Fetching data from {}", provider.name());
-           let provider = Arc::clone(provider);
-           let product_id = self.product_id.clone();
-           let handle = tokio::spawn(async move {
+            let provider = Arc::clone(provider);
+            let product_id = self.product_id.clone();
+            let handle = tokio::spawn(async move {
                 let name = provider.name().to_string();
                 match provider.fetch_order_book(&product_id).await {
                     Ok(book) => Ok(book),
@@ -34,10 +32,9 @@ impl OrderBookAggregator {
                 }
             });
             handles.push(handle);
-
-       }
-       let mut aggregated_book = OrderBook::new();
-       for handle in handles {
+        }
+        let mut aggregated_book = OrderBook::new();
+        for handle in handles {
             match handle.await {
                 Ok(Ok(book)) => {
                     if aggregated_book.is_empty() {
@@ -45,18 +42,15 @@ impl OrderBookAggregator {
                         continue;
                     }
                     aggregated_book.merge(&book);
-                },
+                }
                 _ => {
                     return Err(AggregatorError::AggregationFailed);
                 }
             };
-                
         }
 
         Ok(aggregated_book)
     }
-
-
 }
 
 #[cfg(test)]
@@ -68,10 +62,8 @@ mod tests {
     #[tokio::test]
     async fn test_aggregator() {
         let coinbase = Arc::new(CoinbaseExchange::new());
-        let aggregator = OrderBookAggregator::new(vec![coinbase], "BTC-USD" );
+        let aggregator = OrderBookAggregator::new(vec![coinbase], "BTC-USD");
         let aggregated_book = aggregator.fetch_and_aggregate_data().await.unwrap();
         assert!(!aggregated_book.is_empty());
     }
-
 }
-

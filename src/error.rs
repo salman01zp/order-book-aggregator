@@ -1,10 +1,12 @@
-use thiserror::Error;
 use crate::data_providers::DataProviderError;
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum AggregatorError {
     /// Insufficient liquidity error
-    #[error("Insufficient liquidity on {side}: requested {requested} BTC, only {available} BTC available")]
+    #[error(
+        "Insufficient liquidity on {side}: requested {requested} BTC, only {available} BTC available"
+    )]
     InsufficientLiquidity {
         side: String,
         requested: f64,
@@ -16,5 +18,4 @@ pub enum AggregatorError {
     /// DataProviderError error
     #[error(transparent)]
     DataProviderError(#[from] DataProviderError),
-
 }

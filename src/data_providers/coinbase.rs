@@ -5,12 +5,14 @@ use crate::{
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
+// Coinbase API response structures
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct CoinbaseBookResponse {
     bids: Vec<(String, String, u32)>,
     asks: Vec<(String, String, u32)>,
 }
 
+// Coinbase Exchange Data Provider
 pub struct CoinbaseExchange {
     client: reqwest::Client,
 }
@@ -23,16 +25,15 @@ impl CoinbaseExchange {
     }
 }
 
+// Implement DataProvider trait for CoinbaseExchange
 #[async_trait]
 impl DataProvider for CoinbaseExchange {
     fn name(&self) -> &str {
         "Coinbase"
     }
 
-    async fn fetch_order_book(
-        &self,
-        product_id: &str,
-    ) -> Result<OrderBook, DataProviderError> {
+    // Fetch order book data from Coinbase API
+    async fn fetch_order_book(&self, product_id: &str) -> Result<OrderBook, DataProviderError> {
         let base_url = "https://api.exchange.coinbase.com";
         let url = format!("{}/products/{}/book?level=2", base_url, product_id);
         let response = self

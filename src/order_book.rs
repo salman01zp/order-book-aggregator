@@ -1,6 +1,6 @@
-use std::collections::BTreeMap;
 use crate::error::AggregatorError;
 use ordered_float::OrderedFloat;
+use std::collections::BTreeMap;
 
 #[derive(Debug, Clone)]
 pub struct OrderBook {
@@ -12,7 +12,6 @@ impl OrderBook {
     // Create a new, empty OrderBook
     pub fn new() -> Self {
         OrderBook {
-            
             bids: BTreeMap::new(),
             asks: BTreeMap::new(),
         }
@@ -26,7 +25,7 @@ impl OrderBook {
     pub fn add_bid(&mut self, price: f64, quantity: f64) {
         *self.bids.entry(OrderedFloat(price)).or_insert(0.0) += quantity;
     }
-    
+
     // Add an ask level to the order book
     pub fn add_ask(&mut self, price: f64, quantity: f64) {
         *self.asks.entry(OrderedFloat(price)).or_insert(0.0) += quantity;
@@ -52,7 +51,7 @@ impl OrderBook {
             }
 
             let qty_to_buy = remaining.min(qty_available);
-            total_cost += qty_to_buy * price.0; 
+            total_cost += qty_to_buy * price.0;
             remaining -= qty_to_buy;
         }
 
@@ -78,7 +77,7 @@ impl OrderBook {
             }
 
             let qty_to_sell = remaining.min(qty_available);
-            total_cost += qty_to_sell * price.0; 
+            total_cost += qty_to_sell * price.0;
             remaining -= qty_to_sell;
         }
 
@@ -93,7 +92,6 @@ impl OrderBook {
         Ok(total_cost)
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -113,7 +111,6 @@ mod tests {
         // So total cost = 0.1 * 103123.79 = 10312.379
         // Rounded to 2 decimal places = 10312.38
         assert_eq!(res, 10312.38);
-            
     }
 
     #[test]
