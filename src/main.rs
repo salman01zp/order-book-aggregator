@@ -1,3 +1,4 @@
+mod aggregator;
 mod data_providers;
 mod types;
 
