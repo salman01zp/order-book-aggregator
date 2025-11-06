@@ -1,5 +1,3 @@
-
-
 #[derive(Debug, Clone)]
 pub struct PriceLevel {
     pub price: f64,
@@ -11,6 +9,3 @@ pub struct OrderBook {
     pub bids: Vec<PriceLevel>,
     pub asks: Vec<PriceLevel>,
 }
-
-
-

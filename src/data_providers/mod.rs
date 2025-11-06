@@ -1,12 +1,10 @@
 mod coinbase;
-use thiserror::Error;
 use async_trait::async_trait;
-
-
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum DataProviderError {
-   /// JSON Error occurred.
+    /// JSON Error occurred.
     #[error(transparent)]
     Json(#[from] serde_json::Error),
     /// Reqwest error
@@ -18,10 +16,13 @@ pub enum DataProviderError {
     /// Exchange error.
     #[error("{}", _0)]
     ExchangeError(&'static str),
-} 
+}
 
 #[async_trait]
-pub trait DataProvider: Send + Sync{
+pub trait DataProvider: Send + Sync {
     fn name(&self) -> &str;
-    async fn fetch_order_book(&self, product_id: &str) -> Result<crate::types::OrderBook, DataProviderError>;  
+    async fn fetch_order_book(
+        &self,
+        product_id: &str,
+    ) -> Result<crate::types::OrderBook, DataProviderError>;
 }

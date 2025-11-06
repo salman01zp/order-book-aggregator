@@ -1,16 +1,16 @@
-use serde::{Serialize, Deserialize};
+use crate::{
+    data_providers::{DataProvider, DataProviderError},
+    types::{OrderBook, PriceLevel},
+};
 use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
 use serde_json::to_string;
-use crate::{data_providers::{DataProvider, DataProviderError}, types::{OrderBook, PriceLevel}};
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct CoinbaseBookResponse {
     bids: Vec<(String, String, u32)>,
     asks: Vec<(String, String, u32)>,
 }
-
-
 
 pub struct CoinbaseExchange {
     client: reqwest::Client,
@@ -30,9 +30,12 @@ impl DataProvider for CoinbaseExchange {
         "Coinbase"
     }
 
-    async fn fetch_order_book(&self, product_id : &str) -> Result<crate::types::OrderBook, crate::data_providers::DataProviderError> {
+    async fn fetch_order_book(
+        &self,
+        product_id: &str,
+    ) -> Result<crate::types::OrderBook, crate::data_providers::DataProviderError> {
         let base_url = "https://api.exchange.coinbase.com";
-        let url = format!("{}/products/{}/book?level=2",base_url, product_id);
+        let url = format!("{}/products/{}/book?level=2", base_url, product_id);
         let response = self
             .client
             .get(&url)
@@ -40,11 +43,12 @@ impl DataProvider for CoinbaseExchange {
             .send()
             .await?;
 
-
         if !response.status().is_success() {
-            let res =response.text().await?;
+            let res = response.text().await?;
             println!("Coinbase API error response: {}", res);
-            return Err(DataProviderError::ExchangeError("Failed to fetch order book from Coinbase "));
+            return Err(DataProviderError::ExchangeError(
+                "Failed to fetch order book from Coinbase ",
+            ));
         }
         let book: CoinbaseBookResponse = response.json().await?;
 
@@ -53,7 +57,6 @@ impl DataProvider for CoinbaseExchange {
             .bids
             .iter()
             .filter_map(|level| {
-
                 let price = level.0.parse::<f64>().ok()?;
                 let quantity = level.1.parse::<f64>().ok()?;
                 Some(PriceLevel { price, quantity })
@@ -65,18 +68,13 @@ impl DataProvider for CoinbaseExchange {
             .asks
             .iter()
             .filter_map(|level| {
-
-                    let price = level.0.parse::<f64>().ok()?;
-                    let quantity = level.1.parse::<f64>().ok()?;
-                    Some(PriceLevel { price, quantity })
-                
+                let price = level.0.parse::<f64>().ok()?;
+                let quantity = level.1.parse::<f64>().ok()?;
+                Some(PriceLevel { price, quantity })
             })
             .collect();
-        
 
         Ok(OrderBook { bids, asks })
-
-        
     }
 }
 
