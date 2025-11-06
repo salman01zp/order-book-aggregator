@@ -1,4 +1,3 @@
-use crate::data_providers::DataProviderError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -15,7 +14,19 @@ pub enum AggregatorError {
     /// Aggregation Failed
     #[error("Failed to aggregate order books")]
     AggregationFailed,
-    /// DataProviderError error
+    /// Rate limiter error
+    #[error("Rate limiter error: {0}")]
+    RateLimitExceeded(String),
+    /// JSON Error occurred.
     #[error(transparent)]
-    DataProviderError(#[from] DataProviderError),
+    Json(#[from] serde_json::Error),
+    /// Reqwest error
+    #[error(transparent)]
+    Reqwest(#[from] reqwest::Error),
+    /// Failed to convert string to float
+    #[error(transparent)]
+    ParseFloatError(#[from] std::num::ParseFloatError),
+    /// Exchange error.
+    #[error("{}", _0)]
+    ExchangeError(&'static str),
 }

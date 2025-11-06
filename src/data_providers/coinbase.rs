@@ -1,7 +1,4 @@
-use crate::{
-    data_providers::{DataProvider, DataProviderError},
-    order_book::OrderBook,
-};
+use crate::{data_providers::DataProvider, error::AggregatorError, order_book::OrderBook};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
@@ -33,7 +30,7 @@ impl DataProvider for CoinbaseExchange {
     }
 
     // Fetch order book data from Coinbase API
-    async fn fetch_order_book(&self, product_id: &str) -> Result<OrderBook, DataProviderError> {
+    async fn fetch_order_book(&self, product_id: &str) -> Result<OrderBook, AggregatorError> {
         let base_url = "https://api.exchange.coinbase.com";
         let url = format!("{}/products/{}/book?level=2", base_url, product_id);
         let response = self
@@ -46,7 +43,7 @@ impl DataProvider for CoinbaseExchange {
         if !response.status().is_success() {
             let res = response.text().await?;
             println!("Coinbase API error response: {}", res);
-            return Err(DataProviderError::ExchangeError(
+            return Err(AggregatorError::ExchangeError(
                 "Failed to fetch order book from Coinbase ",
             ));
         }

@@ -2,6 +2,7 @@ mod aggregator;
 mod data_providers;
 mod error;
 mod order_book;
+mod utils;
 use std::sync::Arc;
 
 use clap::Parser;

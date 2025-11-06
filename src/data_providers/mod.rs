@@ -1,27 +1,10 @@
-use crate::order_book::OrderBook;
+use crate::{error::AggregatorError, order_book::OrderBook};
 use async_trait::async_trait;
-use thiserror::Error;
 pub mod coinbase;
 pub mod gemini;
-
-#[derive(Debug, Error)]
-pub enum DataProviderError {
-    /// JSON Error occurred.
-    #[error(transparent)]
-    Json(#[from] serde_json::Error),
-    /// Reqwest error
-    #[error(transparent)]
-    Reqwest(#[from] reqwest::Error),
-    /// Failed to convert string to float
-    #[error(transparent)]
-    ParseFloatError(#[from] std::num::ParseFloatError),
-    /// Exchange error.
-    #[error("{}", _0)]
-    ExchangeError(&'static str),
-}
 
 #[async_trait]
 pub trait DataProvider: Send + Sync {
     fn name(&self) -> &str;
-    async fn fetch_order_book(&self, product_id: &str) -> Result<OrderBook, DataProviderError>;
+    async fn fetch_order_book(&self, product_id: &str) -> Result<OrderBook, AggregatorError>;
 }

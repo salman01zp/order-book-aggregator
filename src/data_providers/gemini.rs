@@ -1,7 +1,4 @@
-use crate::{
-    data_providers::{DataProvider, DataProviderError},
-    order_book::OrderBook,
-};
+use crate::{data_providers::DataProvider, error::AggregatorError, order_book::OrderBook};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
@@ -41,7 +38,7 @@ impl DataProvider for GeminiExchange {
     }
 
     // Fetch order book data from Gemini API
-    async fn fetch_order_book(&self, product_id: &str) -> Result<OrderBook, DataProviderError> {
+    async fn fetch_order_book(&self, product_id: &str) -> Result<OrderBook, AggregatorError> {
         let base_url = "https://api.gemini.com";
         let url = format!("{}/v1/book/{}", base_url, product_id);
         let response = self
@@ -54,7 +51,7 @@ impl DataProvider for GeminiExchange {
         if !response.status().is_success() {
             let res = response.text().await?;
             println!("Gemini API error response: {}", res);
-            return Err(DataProviderError::ExchangeError(
+            return Err(AggregatorError::ExchangeError(
                 "Failed to fetch order book from Gemini",
             ));
         }
