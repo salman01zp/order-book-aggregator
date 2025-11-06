@@ -1,6 +1,7 @@
 mod aggregator;
 mod data_providers;
-mod types;
+mod order_book;
+mod error;
 
 fn main() {
     println!("Hello, world!");

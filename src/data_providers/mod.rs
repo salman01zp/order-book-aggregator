@@ -1,6 +1,7 @@
-mod coinbase;
 use async_trait::async_trait;
 use thiserror::Error;
+use crate::order_book::OrderBook;
+pub mod coinbase;
 
 #[derive(Debug, Error)]
 pub enum DataProviderError {
@@ -24,5 +25,5 @@ pub trait DataProvider: Send + Sync {
     async fn fetch_order_book(
         &self,
         product_id: &str,
-    ) -> Result<crate::types::OrderBook, DataProviderError>;
+    ) -> Result<OrderBook, DataProviderError>;
 }

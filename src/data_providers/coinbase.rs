@@ -1,10 +1,9 @@
 use crate::{
     data_providers::{DataProvider, DataProviderError},
-    types::OrderBook,
+    order_book::OrderBook,
 };
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use serde_json::to_string;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct CoinbaseBookResponse {
@@ -33,7 +32,7 @@ impl DataProvider for CoinbaseExchange {
     async fn fetch_order_book(
         &self,
         product_id: &str,
-    ) -> Result<crate::types::OrderBook, crate::data_providers::DataProviderError> {
+    ) -> Result<OrderBook, DataProviderError> {
         let base_url = "https://api.exchange.coinbase.com";
         let url = format!("{}/products/{}/book?level=2", base_url, product_id);
         let response = self
