@@ -1,71 +1,73 @@
-use crate::data_providers::DataProvider;
+use crate::{data_providers::DataProvider, error::AggregatorError, order_book::OrderBook};
 use std::sync::Arc;
-use tokio::sync::broadcast;
 
 pub struct OrderBookAggregator {
     data_providers: Vec<Arc<dyn crate::data_providers::DataProvider>>,
-    /// Broadcasts a shutdown signal to all active connections.
-    notify_shutdown: broadcast::Sender<()>,
+    product_id: String,
+
 }
 
 impl OrderBookAggregator {
-    pub fn new(data_providers: Vec<Arc<dyn DataProvider>>) -> Self {
-        let (notify_shutdown, _) = broadcast::channel(2);
+    pub fn new(data_providers: Vec<Arc<dyn DataProvider>>, product_id: &str) -> Self {
         OrderBookAggregator {
             data_providers,
-            notify_shutdown,
+            product_id: product_id.to_string(),
+    
         }
     }
 
-    pub fn start_services(&self) {
-        // Start various services here
-    }
+    pub async fn fetch_and_aggregate_data(&self)-> Result<OrderBook, AggregatorError>{
+        let mut handles = Vec::new();
+       for provider in &self.data_providers {
+            println!("Fetching data from {}", provider.name());
+           let provider = Arc::clone(provider);
+           let product_id = self.product_id.clone();
+           let handle = tokio::spawn(async move {
+                let name = provider.name().to_string();
+                match provider.fetch_order_book(&product_id).await {
+                    Ok(book) => Ok(book),
+                    Err(e) => Err((name, e)),
+                }
+            });
+            handles.push(handle);
 
-    /// Returns a broadcast receiver handle for the shutdown signal.
-    pub fn shutdown_signal(&self) -> Shutdown {
-        Shutdown::new(self.notify_shutdown.subscribe())
-    }
-}
-
-/// Listens for the server shutdown signal.
-///
-/// Shutdown is signalled using a `broadcast::Receiver`. Only a single value is
-/// ever sent. Once a value has been sent via the broadcast channel, the server
-/// should shutdown.
-///
-/// The `Shutdown` struct listens for the signal and tracks that the signal has
-/// been received. Callers may query for whether the shutdown signal has been
-/// received or not.
-#[derive(Debug)]
-pub struct Shutdown {
-    /// `true` if the shutdown signal has been received
-    shutdown: bool,
-
-    /// The receive half of the channel used to listen for shutdown.
-    notify: broadcast::Receiver<()>,
-}
-
-impl Shutdown {
-    /// Create a new `Shutdown` backed by the given `broadcast::Receiver`.
-    pub fn new(notify: broadcast::Receiver<()>) -> Shutdown {
-        Shutdown {
-            shutdown: false,
-            notify,
-        }
-    }
-
-    /// Receive the shutdown notice, waiting if necessary.
-    pub async fn recv(&mut self) {
-        // If the shutdown signal has already been received, then return
-        // immediately.
-        if self.shutdown {
-            return;
+       }
+       let mut aggregated_book = OrderBook::new();
+       for handle in handles {
+            match handle.await {
+                Ok(Ok(book)) => {
+                    if aggregated_book.is_empty() {
+                        aggregated_book = book;
+                        continue;
+                    }
+                    aggregated_book.merge(&book);
+                },
+                _ => {
+                    return Err(AggregatorError::AggregationFailed);
+                }
+            };
+                
         }
 
-        // Cannot receive a "lag error" as only one value is ever sent.
-        let _ = self.notify.recv().await;
-
-        // Remember that the signal has been received.
-        self.shutdown = true;
+        Ok(aggregated_book)
     }
+
+
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data_providers::coinbase::CoinbaseExchange;
+    use std::sync::Arc;
+
+    #[tokio::test]
+    async fn test_aggregator() {
+        let coinbase = Arc::new(CoinbaseExchange::new());
+        let aggregator = OrderBookAggregator::new(vec![coinbase], "BTC-USD" );
+        let aggregated_book = aggregator.fetch_and_aggregate_data().await.unwrap();
+        assert!(!aggregated_book.is_empty());
+    }
+
+}
+
