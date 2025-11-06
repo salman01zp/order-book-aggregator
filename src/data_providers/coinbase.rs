@@ -1,6 +1,6 @@
 use crate::{
     data_providers::{DataProvider, DataProviderError},
-    types::{OrderBook, PriceLevel},
+    types::OrderBook,
 };
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -51,30 +51,30 @@ impl DataProvider for CoinbaseExchange {
             ));
         }
         let book: CoinbaseBookResponse = response.json().await?;
-
-        // Parse bids
-        let bids: Vec<PriceLevel> = book
-            .bids
+        let mut order_book = OrderBook::new();
+        // Add bids to order book
+        book.bids
             .iter()
-            .filter_map(|level| {
+            .map(|level| {
                 let price = level.0.parse::<f64>().ok()?;
                 let quantity = level.1.parse::<f64>().ok()?;
-                Some(PriceLevel { price, quantity })
+                order_book.add_bid(price, quantity);
+                Some(())
             })
-            .collect();
+            .count();
 
-        // Parse asks
-        let asks: Vec<PriceLevel> = book
-            .asks
+        // Add asks to order book
+        book.asks
             .iter()
-            .filter_map(|level| {
+            .map(|level| {
                 let price = level.0.parse::<f64>().ok()?;
                 let quantity = level.1.parse::<f64>().ok()?;
-                Some(PriceLevel { price, quantity })
+                order_book.add_ask(price, quantity);
+                Some(())
             })
-            .collect();
+            .count();
 
-        Ok(OrderBook { bids, asks })
+        Ok(order_book)
     }
 }
 
