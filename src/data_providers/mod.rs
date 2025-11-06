@@ -2,6 +2,8 @@ use async_trait::async_trait;
 use thiserror::Error;
 use crate::order_book::OrderBook;
 pub mod coinbase;
+pub mod gemini;
+
 
 #[derive(Debug, Error)]
 pub enum DataProviderError {

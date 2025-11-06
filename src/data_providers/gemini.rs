@@ -6,35 +6,42 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct CoinbaseBookResponse {
-    bids: Vec<(String, String, u32)>,
-    asks: Vec<(String, String, u32)>,
+struct GeminiPricelevel {
+    price: String,
+    amount: String,
+    timestamp: String,
 }
 
-pub struct CoinbaseExchange {
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct GeminiBookResponse {
+    bids: Vec<GeminiPricelevel>,
+    asks: Vec<GeminiPricelevel>,
+}
+
+pub struct GeminiExchange {
     client: reqwest::Client,
 }
 
-impl CoinbaseExchange {
+impl GeminiExchange {
     pub fn new() -> Self {
-        CoinbaseExchange {
+        GeminiExchange {
             client: reqwest::Client::new(),
         }
     }
 }
 
 #[async_trait]
-impl DataProvider for CoinbaseExchange {
+impl DataProvider for GeminiExchange {
     fn name(&self) -> &str {
-        "Coinbase"
+        "Gemini"
     }
 
     async fn fetch_order_book(
         &self,
         product_id: &str,
     ) -> Result<OrderBook, DataProviderError> {
-        let base_url = "https://api.exchange.coinbase.com";
-        let url = format!("{}/products/{}/book?level=2", base_url, product_id);
+        let base_url = "https://api.gemini.com";
+        let url = format!("{}/v1/book/{}", base_url, product_id);
         let response = self
             .client
             .get(&url)
@@ -44,22 +51,22 @@ impl DataProvider for CoinbaseExchange {
 
         if !response.status().is_success() {
             let res = response.text().await?;
-            println!("Coinbase API error response: {}", res);
+            println!("Gemini API error response: {}", res);
             return Err(DataProviderError::ExchangeError(
-                "Failed to fetch order book from Coinbase ",
+                "Failed to fetch order book from Gemini",
             ));
         }
-        let book: CoinbaseBookResponse = response.json().await?;
+        let book: GeminiBookResponse = response.json().await?;
         let mut order_book = OrderBook::new();
         // Add bids to order book
         for level in &book.bids {
-            if let (Ok(price), Ok(quantity)) = (level.0.parse::<f64>(), level.1.parse::<f64>()) {
+            if let (Ok(price), Ok(quantity)) = (level.price.parse::<f64>(), level.amount.parse::<f64>()) {
                 order_book.add_bid(price, quantity);
             }
         }
         // Add asks to order book
         for level in &book.asks {
-            if let (Ok(price), Ok(quantity)) = (level.0.parse::<f64>(), level.1.parse::<f64>()) {
+            if let (Ok(price), Ok(quantity)) = (level.price.parse::<f64>(), level.amount.parse::<f64>()) {
                 order_book.add_ask(price, quantity);
             }
         }
@@ -73,11 +80,12 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_fetch_coinbase_order_book() {
-        let exchange = CoinbaseExchange::new();
-        let result = exchange.fetch_order_book("BTC-USD").await;
-        let book = result.unwrap();
-        assert!(!book.bids.is_empty());
-        assert!(!book.asks.is_empty());
+    async fn test_fetch_gemini_order_book() {
+        let exchange = GeminiExchange::new();
+        let order_book = exchange.fetch_order_book("BTCUSD").await.unwrap();
+        assert!(!order_book.is_empty());
     }
 }
+
+    
+

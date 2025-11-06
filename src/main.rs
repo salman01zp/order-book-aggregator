@@ -6,6 +6,7 @@ use std::sync::Arc;
 
 use clap::Parser;
 
+use crate::data_providers::gemini::GeminiExchange;
 use crate::{aggregator::OrderBookAggregator, data_providers::coinbase::CoinbaseExchange, error::AggregatorError};
 use crate::data_providers::DataProvider;
 
@@ -25,6 +26,7 @@ async fn main()-> Result<(), AggregatorError>{
 
     let data_providers = vec![
         Arc::new(CoinbaseExchange::new()) as Arc<dyn DataProvider>,
+        Arc::new(GeminiExchange::new()) as Arc<dyn DataProvider>,
     ];
     
     let aggregator = OrderBookAggregator::new(data_providers, "BTC-USD");
