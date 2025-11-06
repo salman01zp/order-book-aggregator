@@ -2,12 +2,15 @@ use crate::{data_providers::DataProvider, error::AggregatorError, order_book::Or
 use std::sync::Arc;
 
 pub struct OrderBookAggregator {
+    // Data providers to fetch order book data from
     data_providers: Vec<Arc<dyn crate::data_providers::DataProvider>>,
+    // OrderBook aggregation for this product ID
     product_id: String,
 
 }
 
 impl OrderBookAggregator {
+    // Create a new OrderBookAggregator
     pub fn new(data_providers: Vec<Arc<dyn DataProvider>>, product_id: &str) -> Self {
         OrderBookAggregator {
             data_providers,
@@ -16,6 +19,7 @@ impl OrderBookAggregator {
         }
     }
 
+    // Fetch and aggregate order book data from all data providers
     pub async fn fetch_and_aggregate_data(&self)-> Result<OrderBook, AggregatorError>{
         let mut handles = Vec::new();
        for provider in &self.data_providers {
