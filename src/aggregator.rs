@@ -23,7 +23,6 @@ impl OrderBookAggregator {
     pub async fn fetch_and_aggregate_data(&self) -> Result<OrderBook, AggregatorError> {
         let mut handles = Vec::new();
         for provider in &self.data_providers {
-            println!("Fetching data from {}", provider.name());
             let provider = Arc::clone(provider);
             let product_id = self.product_id.clone();
             let handle = tokio::spawn(async move {
