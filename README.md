@@ -1,11 +1,11 @@
 # Order Book Aggregator
 
-Aggregates order book data from multiple cryptocurrency exchanges.
+Aggregates order book data from multiple exchanges.
 
 
 ### Prerequisites
 
-This repo uses Rust so it is required to have a Rust developer environment set up. First install and configure rustup:
+Install and configure rustup:
 
 ```bash
 # Install

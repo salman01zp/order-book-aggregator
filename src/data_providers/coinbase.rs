@@ -23,7 +23,8 @@ pub struct CoinbaseExchange {
 
 impl CoinbaseExchange {
     pub fn new() -> Self {
-        let url = dotenvy::var("COINBASE_API_BASE_URL").expect("Failed to get coinbase url from env");
+        let url =
+            dotenvy::var("COINBASE_API_BASE_URL").expect("Failed to get coinbase url from env");
         let base_url = Url::parse(&url).expect("Invalid Coinbase API base URL");
 
         CoinbaseExchange {
@@ -50,7 +51,6 @@ impl DataProvider for CoinbaseExchange {
             self.base_url,
             product_id.to_coinbase_symbol()
         );
-        println!("Coinbase URL: {}", url);
         // Todo: Explore retry request client with backoff and retry policies to handle rate limits and other errors.
         self.rate_limiter
             .lock()
