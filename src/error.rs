@@ -15,7 +15,7 @@ pub enum AggregatorError {
     #[error("Failed to aggregate order books")]
     AggregationFailed,
     /// Rate limiter error
-    #[error("Rate limiter error: {0}")]
+    #[error("{0}")]
     RateLimitExceeded(String),
     /// JSON Error occurred.
     #[error(transparent)]

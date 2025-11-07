@@ -1,7 +1,12 @@
-use crate::{data_providers::DataProvider, error::AggregatorError, order_book::OrderBook};
+use std::sync::Arc;
+
+use crate::{
+    data_providers::DataProvider, error::AggregatorError, order_book::OrderBook,
+    rate_limiter::RateLimiter,
+};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-
+use tokio::sync::Mutex;
 // Coinbase API response structures
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct CoinbaseBookResponse {
@@ -12,12 +17,16 @@ struct CoinbaseBookResponse {
 // Coinbase Exchange Data Provider
 pub struct CoinbaseExchange {
     client: reqwest::Client,
+    rate_limiter: Arc<Mutex<RateLimiter>>,
 }
 
 impl CoinbaseExchange {
     pub fn new() -> Self {
         CoinbaseExchange {
             client: reqwest::Client::new(),
+            rate_limiter: Arc::new(Mutex::new(
+                RateLimiter::new(1, 2), // 1 requests per 2 seconds.
+            )),
         }
     }
 }
@@ -33,6 +42,12 @@ impl DataProvider for CoinbaseExchange {
     async fn fetch_order_book(&self, product_id: &str) -> Result<OrderBook, AggregatorError> {
         let base_url = "https://api.exchange.coinbase.com";
         let url = format!("{}/products/{}/book?level=2", base_url, product_id);
+        // Todo: Implement retry request client with backoff and retry policies to handle rate limits other errors.
+        self.rate_limiter
+            .lock()
+            .await
+            .check_if_rate_limited()
+            .await?;
         let response = self
             .client
             .get(&url)
@@ -72,10 +87,17 @@ mod tests {
 
     #[tokio::test]
     async fn test_fetch_coinbase_order_book() {
-        let exchange = CoinbaseExchange::new();
-        let result = exchange.fetch_order_book("BTC-USD").await;
-        let book = result.unwrap();
-        assert!(!book.bids.is_empty());
-        assert!(!book.asks.is_empty());
+        let provider = CoinbaseExchange::new();
+        let book = provider.fetch_order_book("BTC-USD").await.unwrap();
+        assert!(!book.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_rate_limiter() {
+        let provider = CoinbaseExchange::new();
+        // first request should pass
+        assert!(provider.fetch_order_book("BTC-USD").await.is_ok());
+        // secong request should be rate limited
+        assert!(provider.fetch_order_book("BTC-USD").await.is_err());
     }
 }
