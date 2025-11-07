@@ -109,6 +109,7 @@ mod tests {
         // first request should pass
         assert!(provider.fetch_order_book("BTCUSD").await.is_ok());
         // secong request should be rate limited
-        assert!(provider.fetch_order_book("BTCUSD").await.is_err());
+        let res = provider.fetch_order_book("BTC-USD").await;
+        assert!(matches!(res, Err(AggregatorError::RateLimitExceeded(_))));
     }
 }

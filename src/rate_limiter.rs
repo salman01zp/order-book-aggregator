@@ -46,7 +46,9 @@ mod tests {
         let mut rate_limiter = RateLimiter::new(1, 2); // 1 request per 2 seconds
         // Use up 1 token
         assert!(rate_limiter.check_if_rate_limited().await.is_ok());
-        // Next request should be rate limited
-        assert!(rate_limiter.check_if_rate_limited().await.is_err());
+        // Next request should be rate limited wiht RateLimitExceeded error
+        let res = rate_limiter.check_if_rate_limited().await;
+        assert!(matches!(res, Err(AggregatorError::RateLimitExceeded(_))));
+        
     }
 }
