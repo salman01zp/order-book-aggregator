@@ -3,12 +3,14 @@ mod data_providers;
 mod error;
 mod order_book;
 mod rate_limiter;
+mod types;
 use std::sync::Arc;
 
 use clap::Parser;
 
 use crate::data_providers::DataProvider;
 use crate::data_providers::gemini::GeminiExchange;
+use crate::types::Product;
 use crate::{
     aggregator::OrderBookAggregator, data_providers::coinbase::CoinbaseExchange,
     error::AggregatorError,
@@ -16,7 +18,7 @@ use crate::{
 
 #[derive(Parser, Debug)]
 #[command(name = "order-book-aggregator")]
-#[command(about = "BTC-USD Order Book Aggregator", long_about = None)]
+#[command(about = "Order Book Aggregator", long_about = None)]
 struct Args {
     #[arg(long, default_value = "10.0")]
     qty: f64,
@@ -32,7 +34,7 @@ async fn main() -> Result<(), AggregatorError> {
         Arc::new(GeminiExchange::new()) as Arc<dyn DataProvider>,
     ];
 
-    let aggregator = OrderBookAggregator::new(data_providers, "BTC-USD");
+    let aggregator = OrderBookAggregator::new(data_providers, Product::BTCUSD);
     let aggregated_book = aggregator.fetch_and_aggregate_data().await?;
 
     let best_buy_price = aggregated_book.calculate_best_buy_offer(quantity)?;

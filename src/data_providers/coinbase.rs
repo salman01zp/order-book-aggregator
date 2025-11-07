@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     data_providers::DataProvider, error::AggregatorError, order_book::OrderBook,
-    rate_limiter::RateLimiter,
+    rate_limiter::RateLimiter, types::Product,
 };
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -39,9 +39,13 @@ impl DataProvider for CoinbaseExchange {
     }
 
     // Fetch order book data from Coinbase API
-    async fn fetch_order_book(&self, product_id: &str) -> Result<OrderBook, AggregatorError> {
+    async fn fetch_order_book(&self, product_id: Product) -> Result<OrderBook, AggregatorError> {
         let base_url = "https://api.exchange.coinbase.com";
-        let url = format!("{}/products/{}/book?level=2", base_url, product_id);
+        let url = format!(
+            "{}/products/{}/book?level=2",
+            base_url,
+            product_id.to_coinbase_symbol()
+        );
         // Todo: Implement retry request client with backoff and retry policies to handle rate limits other errors.
         self.rate_limiter
             .lock()
@@ -88,7 +92,7 @@ mod tests {
     #[tokio::test]
     async fn test_fetch_coinbase_order_book() {
         let provider = CoinbaseExchange::new();
-        let book = provider.fetch_order_book("BTC-USD").await.unwrap();
+        let book = provider.fetch_order_book(Product::BTCUSD).await.unwrap();
         assert!(!book.is_empty());
     }
 
@@ -96,9 +100,9 @@ mod tests {
     async fn test_rate_limiter() {
         let provider = CoinbaseExchange::new();
         // first request should pass
-        assert!(provider.fetch_order_book("BTC-USD").await.is_ok());
+        assert!(provider.fetch_order_book(Product::BTCUSD).await.is_ok());
         // secong request should be rate limited
-        let res = provider.fetch_order_book("BTC-USD").await;
+        let res = provider.fetch_order_book(Product::BTCUSD).await;
         assert!(matches!(res, Err(AggregatorError::RateLimitExceeded(_))));
     }
 }

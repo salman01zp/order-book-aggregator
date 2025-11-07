@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     data_providers::DataProvider, error::AggregatorError, order_book::OrderBook,
-    rate_limiter::RateLimiter,
+    rate_limiter::RateLimiter, types::Product,
 };
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -47,9 +47,9 @@ impl DataProvider for GeminiExchange {
     }
 
     // Fetch order book data from Gemini API
-    async fn fetch_order_book(&self, product_id: &str) -> Result<OrderBook, AggregatorError> {
+    async fn fetch_order_book(&self, product_id: Product) -> Result<OrderBook, AggregatorError> {
         let base_url = "https://api.gemini.com";
-        let url = format!("{}/v1/book/{}", base_url, product_id);
+        let url = format!("{}/v1/book/{}", base_url, product_id.to_gemini_symbol());
         self.rate_limiter
             .lock()
             .await
@@ -99,7 +99,7 @@ mod tests {
     #[tokio::test]
     async fn test_fetch_gemini_order_book() {
         let exchange = GeminiExchange::new();
-        let order_book = exchange.fetch_order_book("BTCUSD").await.unwrap();
+        let order_book = exchange.fetch_order_book(Product::BTCUSD).await.unwrap();
         assert!(!order_book.is_empty());
     }
 
@@ -107,9 +107,9 @@ mod tests {
     async fn test_rate_limiter() {
         let provider = GeminiExchange::new();
         // first request should pass
-        assert!(provider.fetch_order_book("BTCUSD").await.is_ok());
+        assert!(provider.fetch_order_book(Product::BTCUSD).await.is_ok());
         // secong request should be rate limited
-        let res = provider.fetch_order_book("BTC-USD").await;
+        let res = provider.fetch_order_book(Product::BTCUSD).await;
         assert!(matches!(res, Err(AggregatorError::RateLimitExceeded(_))));
     }
 }

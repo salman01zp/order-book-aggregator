@@ -3,6 +3,7 @@ use tokio::time::{Duration, Instant};
 use crate::error::AggregatorError;
 
 // RateLimiter struct to manage API request limits
+// We are using a simple token bucket algorithm here
 pub struct RateLimiter {
     max_requests: u32,
     interval: Duration,
@@ -49,6 +50,5 @@ mod tests {
         // Next request should be rate limited wiht RateLimitExceeded error
         let res = rate_limiter.check_if_rate_limited().await;
         assert!(matches!(res, Err(AggregatorError::RateLimitExceeded(_))));
-        
     }
 }

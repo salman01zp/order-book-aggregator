@@ -56,7 +56,9 @@ impl OrderBook {
         }
 
         if remaining > 0.0 {
-            return Err(AggregatorError::InsufficientLiquidity("Insufficient liquidity to complete order".to_string()));
+            return Err(AggregatorError::InsufficientLiquidity(
+                "Insufficient liquidity to complete order".to_string(),
+            ));
         }
         total_cost = (total_cost * 100.0).round() / 100.0;
         Ok(total_cost)
@@ -78,8 +80,9 @@ impl OrderBook {
         }
 
         if remaining > 0.0 {
-            return Err(AggregatorError::InsufficientLiquidity("Insufficient liquidity to complete order".to_string()));
-
+            return Err(AggregatorError::InsufficientLiquidity(
+                "Insufficient liquidity to complete order".to_string(),
+            ));
         }
         total_cost = (total_cost * 100.0).round() / 100.0;
         Ok(total_cost)
@@ -122,11 +125,14 @@ mod tests {
     #[test]
     fn test_insufficient_liquidity_buy() {
         let mut order_book = OrderBook::new();
-        // We have liquidity 0.2 BTC 
+        // We have liquidity 0.2 BTC
         order_book.add_ask(103118.00, 0.2);
         // We are trying to buy 0.5 BTC and this should fail with InsufficientLiquidity error
         let res = order_book.calculate_best_buy_offer(0.5);
-        assert!(matches!(res, Err(AggregatorError::InsufficientLiquidity { .. })));
+        assert!(matches!(
+            res,
+            Err(AggregatorError::InsufficientLiquidity { .. })
+        ));
     }
 
     #[test]
@@ -136,6 +142,9 @@ mod tests {
         order_book.add_bid(103118.00, 0.3);
         // We are trying to sell 0.6 BTC and this should fail with InsufficientLiquidity error
         let res = order_book.calculate_best_sell_offer(0.6);
-        assert!(matches!(res, Err(AggregatorError::InsufficientLiquidity { .. })));
+        assert!(matches!(
+            res,
+            Err(AggregatorError::InsufficientLiquidity { .. })
+        ));
     }
 }
