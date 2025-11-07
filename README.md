@@ -28,9 +28,17 @@ Great! Now your Rust environment is ready!
 ```bash
 git clone https://github.com/salman01zp/order-book-aggregator
 cd order-book-aggregator
-cargo build --release
 ```
 
+## Configure Environment Variables
+```bash
+cp .env.example .env
+```
+
+## Build
+```bash
+cargo build --release
+```
 ## Run
 
 Run with default quantity 10:
