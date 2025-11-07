@@ -1,5 +1,5 @@
 // Supported products for aggregation
-
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Clone)]
 pub enum Product {
     BTCUSD,
