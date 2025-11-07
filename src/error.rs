@@ -23,4 +23,7 @@ pub enum AggregatorError {
     /// Exchange error.
     #[error("{0}")]
     ExchangeError(String),
+    /// Environment variable error
+    #[error(transparent)]
+    DotenvyError(#[from] dotenvy::Error),
 }

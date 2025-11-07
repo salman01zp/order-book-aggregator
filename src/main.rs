@@ -6,8 +6,6 @@ mod rate_limiter;
 mod types;
 use std::sync::Arc;
 
-use clap::Parser;
-
 use crate::data_providers::DataProvider;
 use crate::data_providers::gemini::GeminiExchange;
 use crate::types::Product;
@@ -15,6 +13,8 @@ use crate::{
     aggregator::OrderBookAggregator, data_providers::coinbase::CoinbaseExchange,
     error::AggregatorError,
 };
+use clap::Parser;
+use dotenvy::dotenv;
 
 #[derive(Parser, Debug)]
 #[command(name = "order-book-aggregator")]
@@ -28,6 +28,8 @@ struct Args {
 async fn main() -> Result<(), AggregatorError> {
     let args = Args::parse();
     let quantity = args.qty;
+    // Load environment variables from .env file
+    dotenv()?;
 
     let data_providers = vec![
         Arc::new(CoinbaseExchange::new()) as Arc<dyn DataProvider>,

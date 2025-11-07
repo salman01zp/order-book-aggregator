@@ -1,11 +1,11 @@
-use std::sync::Arc;
-
 use crate::{
     data_providers::DataProvider, error::AggregatorError, order_book::OrderBook,
     rate_limiter::RateLimiter, types::Product,
 };
 use async_trait::async_trait;
+use reqwest::Url;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use tokio::sync::Mutex;
 // Coinbase API response structures
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -18,15 +18,20 @@ struct CoinbaseBookResponse {
 pub struct CoinbaseExchange {
     client: reqwest::Client,
     rate_limiter: Arc<Mutex<RateLimiter>>,
+    base_url: Url,
 }
 
 impl CoinbaseExchange {
     pub fn new() -> Self {
+        let url = dotenvy::var("COINBASE_API_BASE_URL").expect("Failed to get coinbase url");
+        let base_url = Url::parse(&url).expect("Invalid Coinbase API base URL");
+
         CoinbaseExchange {
             client: reqwest::Client::new(),
             rate_limiter: Arc::new(Mutex::new(
                 RateLimiter::new(1, 2), // 1 requests per 2 seconds.
             )),
+            base_url,
         }
     }
 }
@@ -40,12 +45,12 @@ impl DataProvider for CoinbaseExchange {
 
     // Fetch order book data from Coinbase API
     async fn fetch_order_book(&self, product_id: Product) -> Result<OrderBook, AggregatorError> {
-        let base_url = "https://api.exchange.coinbase.com";
         let url = format!(
-            "{}/products/{}/book?level=2",
-            base_url,
+            "{}products/{}/book?level=2",
+            self.base_url,
             product_id.to_coinbase_symbol()
         );
+        println!("Coinbase URL: {}", url);
         // Todo: Explore retry request client with backoff and retry policies to handle rate limits and other errors.
         self.rate_limiter
             .lock()
@@ -61,9 +66,10 @@ impl DataProvider for CoinbaseExchange {
 
         if !response.status().is_success() {
             let err = response.text().await?;
-            return Err(AggregatorError::ExchangeError(
-                format!("Failed to fetch order book from Coinbase :  {}", err),
-            ));
+            return Err(AggregatorError::ExchangeError(format!(
+                "Failed to fetch order book from Coinbase :  {}",
+                err
+            )));
         }
         let book: CoinbaseBookResponse = response.json().await?;
         let mut order_book = OrderBook::new();
