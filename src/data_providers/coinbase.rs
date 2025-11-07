@@ -46,7 +46,7 @@ impl DataProvider for CoinbaseExchange {
             base_url,
             product_id.to_coinbase_symbol()
         );
-        // Todo: Implement retry request client with backoff and retry policies to handle rate limits other errors.
+        // Todo: Explore retry request client with backoff and retry policies to handle rate limits and other errors.
         self.rate_limiter
             .lock()
             .await
@@ -60,10 +60,9 @@ impl DataProvider for CoinbaseExchange {
             .await?;
 
         if !response.status().is_success() {
-            let res = response.text().await?;
-            println!("Coinbase API error response: {}", res);
+            let err = response.text().await?;
             return Err(AggregatorError::ExchangeError(
-                "Failed to fetch order book from Coinbase ",
+                format!("Failed to fetch order book from Coinbase :  {}", err),
             ));
         }
         let book: CoinbaseBookResponse = response.json().await?;

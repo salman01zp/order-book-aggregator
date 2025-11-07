@@ -21,6 +21,6 @@ pub enum AggregatorError {
     #[error(transparent)]
     ParseFloatError(#[from] std::num::ParseFloatError),
     /// Exchange error.
-    #[error("{}", _0)]
-    ExchangeError(&'static str),
+    #[error("{0}")]
+    ExchangeError(String),
 }

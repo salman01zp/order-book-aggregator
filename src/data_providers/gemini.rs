@@ -63,10 +63,9 @@ impl DataProvider for GeminiExchange {
             .await?;
 
         if !response.status().is_success() {
-            let res = response.text().await?;
-            println!("Gemini API error response: {}", res);
+            let err: String = response.text().await?;
             return Err(AggregatorError::ExchangeError(
-                "Failed to fetch order book from Gemini",
+                format!("Failed to fetch order book from Gemini :  {}", err),
             ));
         }
         let book: GeminiBookResponse = response.json().await?;
