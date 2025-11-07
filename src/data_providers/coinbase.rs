@@ -23,7 +23,7 @@ pub struct CoinbaseExchange {
 
 impl CoinbaseExchange {
     pub fn new() -> Self {
-        let url = dotenvy::var("COINBASE_API_BASE_URL").expect("Failed to get coinbase url");
+        let url = dotenvy::var("COINBASE_API_BASE_URL").expect("Failed to get coinbase url from env");
         let base_url = Url::parse(&url).expect("Invalid Coinbase API base URL");
 
         CoinbaseExchange {

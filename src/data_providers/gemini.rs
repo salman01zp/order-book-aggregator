@@ -31,7 +31,7 @@ pub struct GeminiExchange {
 
 impl GeminiExchange {
     pub fn new() -> Self {
-        let url = dotenvy::var("GEMINI_API_BASE_URL").expect("Failed to get gemini base url");
+        let url = dotenvy::var("GEMINI_API_BASE_URL").expect("Failed to get gemini base url from env");
         let base_url = Url::parse(&url).expect("Invalid Gemini API base URL");
         GeminiExchange {
             client: reqwest::Client::new(),
