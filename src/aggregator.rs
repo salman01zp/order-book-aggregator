@@ -35,19 +35,34 @@ impl OrderBookAggregator {
             handles.push(handle);
         }
         let mut aggregated_book = OrderBook::new();
+        // Every sucessfull data fetch task will be marked and counted as handled.
+        let mut marked_as_handled = 0;
+
         for handle in handles {
             match handle.await {
                 Ok(Ok(book)) => {
+                    marked_as_handled += 1;
                     if aggregated_book.is_empty() {
                         aggregated_book = book;
                         continue;
                     }
                     aggregated_book.merge(&book);
                 }
-                _ => {
-                    return Err(AggregatorError::AggregationFailed);
+                Ok(Err((provider_name, error))) => {
+                    println!(
+                        "Warning: Failed to fetch data from {}: {}",
+                        provider_name, error
+                    );
+                }
+                Err(join_error) => {
+                    println!("Warning: Task join error: {}", join_error);
                 }
             };
+        }
+
+        // Only fail if ALL providers failed.
+        if marked_as_handled == 0 {
+            return Err(AggregatorError::AggregationFailed);
         }
 
         Ok(aggregated_book)
