@@ -40,10 +40,10 @@ async fn main() -> Result<(), AggregatorError> {
     let aggregated_book = aggregator.fetch_and_aggregate_data().await?;
 
     let best_buy_price = aggregated_book.calculate_best_buy_offer(quantity)?;
-    println!("To buy  {} BTC : ${}", quantity, best_buy_price);
+    println!("To buy  {} BTC : ${:?}", quantity, best_buy_price);
 
     let best_sell_price = aggregated_book.calculate_best_sell_offer(quantity)?;
-    println!("To sell {} BTC : ${}", quantity, best_sell_price);
+    println!("To sell {} BTC : ${:?}", quantity, best_sell_price);
 
     Ok(())
 }

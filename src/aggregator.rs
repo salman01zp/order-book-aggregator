@@ -1,5 +1,8 @@
 use crate::{
-    data_providers::DataProvider, error::AggregatorError, order_book::OrderBook, types::Product,
+    data_providers::DataProvider,
+    error::AggregatorError,
+    order_book::OrderBook,
+    types::{Exchange, Product},
 };
 use std::sync::Arc;
 
@@ -34,7 +37,7 @@ impl OrderBookAggregator {
             });
             handles.push(handle);
         }
-        let mut aggregated_book = OrderBook::new();
+        let mut aggregated_book = OrderBook::new(Exchange::AggregatedExchange);
         // Every sucessfull data fetch task will be marked and counted as handled.
         let mut marked_as_handled = 0;
 

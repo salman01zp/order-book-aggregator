@@ -1,6 +1,9 @@
 use crate::{
-    data_providers::DataProvider, error::AggregatorError, order_book::OrderBook,
-    rate_limiter::RateLimiter, types::Product,
+    data_providers::DataProvider,
+    error::AggregatorError,
+    order_book::OrderBook,
+    rate_limiter::RateLimiter,
+    types::{Exchange, Product},
 };
 use async_trait::async_trait;
 use reqwest::Url;
@@ -72,7 +75,7 @@ impl DataProvider for CoinbaseExchange {
             )));
         }
         let book: CoinbaseBookResponse = response.json().await?;
-        let mut order_book = OrderBook::new();
+        let mut order_book = OrderBook::new(Exchange::Coinbase);
         // Add bids to order book
         for level in &book.bids {
             if let (Ok(price), Ok(quantity)) = (level.0.parse::<f64>(), level.1.parse::<f64>()) {

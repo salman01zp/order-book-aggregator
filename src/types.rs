@@ -18,3 +18,20 @@ impl Product {
         }
     }
 }
+
+#[derive(Debug, Clone, Copy)]
+pub enum Exchange {
+    Coinbase,
+    Gemini,
+    AggregatedExchange,
+}
+
+impl Exchange {
+    pub fn to_string(&self) -> String {
+        match self {
+            Exchange::Coinbase => "coinbase".to_string(),
+            Exchange::Gemini => "gemini".to_string(),
+            Exchange::AggregatedExchange => "agg".to_string(),
+        }
+    }
+}
